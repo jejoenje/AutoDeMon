@@ -102,7 +102,7 @@ find_Ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
   
   loginStatusCheck()
   
-  remDr$navigate("https://app.bto.org/demography/bto/main/search_new/records.jsp")
+  remDr$navigate("https://app.bto.org/demography/bto/main/search-ringing/search-ringing.jsp")
   if(verbose==TRUE) print("Waiting for record search page to load...")
   Sys.sleep(pause*5)
   if(verbose==TRUE) print("Moving on...")
@@ -147,7 +147,15 @@ find_Ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
   
   if(verbose==TRUE) print("Waiting for selected data to load...")
   
-  Sys.sleep(pause*5)
+  res <- NULL
+  while(is.null(res)) {
+    suppressMessages({
+      try({res <- remDr$findElement("id","resultTable_length")}, silent = TRUE)  
+    })
+    Sys.sleep(1)
+  }
+  
+  #Sys.sleep(pause*5)
   
   if(verbose==TRUE) print("Moving on... extracting data...")
   

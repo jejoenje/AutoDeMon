@@ -3,7 +3,7 @@ library(XML)
 
 source("AutoDemOn_functions.R")
 rD <- rsDriver(
-      port = 4477L,
+      port = 4480L,
       browser = c("firefox"),
       version = "latest",
     )
@@ -14,3 +14,4 @@ demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 switchOperatingGroup(sel = "Tay Ringing Group")
 
 
+z <- find_Ring("GR50844")
