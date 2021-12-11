@@ -63,6 +63,40 @@ loginStatusCheck <- function(verbose = T) {
   
 }
 
+switchOperatingGroup <- function(sel) {
+  remDr$navigate("https://app.bto.org/demography/bto/main/user-setup-options/operator/switch-operator.jsp")
+  
+  cur_opt <- remDr$findElements("id", "navString")
+  cur_opt <- cur_opt[[1]]$getElementText()[[1]]
+  cur_opt <- gsub("Operating as: ", "", cur_opt)
+  cur_opt <- gsub(" Change","",cur_opt)
+  
+  if(cur_opt!=sel) {
+    
+    ### Find table with listed operating groups
+    ptable <- remDr$findElements("id","permissionsTable")
+    ptable_h <- ptable[[1]]$getElementAttribute("outerHTML")[[1]]
+    ptable_t <- readHTMLTable(ptable_h, as.data.frame=TRUE)[[1]]
+    
+    ### Find corresponding buttons:
+    opts <- remDr$findElements(using = "class", "btn")
+    
+    ### Find which button corresponds to the desired one:
+    p_target <- which(ptable_t[,1]==sel)
+    
+    ### Click button:
+    opts[[p_target]]$clickElement()
+    
+    Sys.sleep(1)
+    
+    confirm <- remDr$findElements(using = "class", "btn-success")
+    confirm[[1]]$clickElement()
+  }
+  
+}
+
+
+
 
 find_Ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
   
