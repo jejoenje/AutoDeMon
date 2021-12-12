@@ -209,34 +209,6 @@ findSpeciesCode <- function(s) {
   
 }
 
-switchOpGroup <- function(checkGroup, pause = 0.5) {
-  
-  remDr$navigate("https://app.bto.org/demography/bto/main/data-home.jsp")
-  Sys.sleep(pause*1)
-  
-  # ... in main screen
-  opgroup_change <- remDr$findElement(using = "link text", value = "Change")
-  opgroup_change$clickElement()
-  
-  Sys.sleep(pause*1)
-  
-  opgroup <- remDr$findElements("class", "col-xs-12")
-  opgroup <- opgroup[[3]]$getElementText()[[1]]
-  opgroup <- strsplit(opgroup, ": ")[[1]][2]
-  
-  if(opgroup == checkGroup) {
-    
-    #### THIS NEEDS WORK
-    
-    
-    paste("You are already operating as", checkGroup)
-  } else {
-    remDr$findElements("class", "col-xs-12")
-  }
-  
-  
-}
-
 summariseReports <- function(date_filter, verbose = T, pause=0.5) {
   
   loginStatusCheck()
