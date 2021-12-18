@@ -100,25 +100,33 @@ find_ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
   loginStatusCheck()
   
   remDr$navigate("https://app.bto.org/demography/bto/main/search-ringing/search-ringing.jsp")
+
+  ### Add 'waiting' while search page loads. Checked via availability of tick boxes
   if(verbose==TRUE) print("Waiting for record search page to load...")
-  Sys.sleep(pause*5)
-  if(verbose==TRUE) print("Moving on...")
+  recordFilters <- NULL
+  while(length(recordFilters)==0) {
+      try({recordFilters <- 
+        remDr$findElements("css selector", "#recordFilters")
+      }, silent = TRUE)  
+    Sys.sleep(pause/2)
+  }
   
-  ### Make sure we tick "Accepted"
-  ###
-  ### NOTE THIS NEEDS UPDATING SO IT AUTOMATICALLY CHECKS WHICH BOXES ARE NOT ALREADY TICKED:
+  ### Tick 'accepted' filter.
+  if(verbose==TRUE) print("Setting 'Accepted' filter")
+  recordFilters2 <- NULL
+  while(length(recordFilters2)==0) {
+    try({
+      recordFilters2 <- strsplit(recordFilters[[1]]$getElementText()[[1]],"\n")[[1]]
+    }, silent = TRUE)
+    Sys.sleep(pause/2)
+  }
   
-  if(verbose==TRUE) print("Setting search filters...")
-  recordFilters <- remDr$findElements("css selector", "#recordFilters")
-  Sys.sleep(pause)
-  recordFilters <- strsplit(recordFilters[[1]]$getElementText()[[1]],"\n")[[1]]
-  Sys.sleep(pause)
   selectB <- remDr$findElements(using = "class", 'btn-group')
-  acc_filter <- which(recordFilters == "Accepted")
+  acc_filter <- which(recordFilters2 == "Accepted")
   ### Select "accepted" button using index found above:
   selectB[[acc_filter]]$clickElement()
   if(verbose==TRUE) print("Done setting search filters...")
-  
+ 
   if(verbose==TRUE) print("Setting species/date filters...")
   
   if(!is.null(s)) {
@@ -149,10 +157,8 @@ find_ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
     suppressMessages({
       try({res <- remDr$findElement("id","resultTable_length")}, silent = TRUE)  
     })
-    Sys.sleep(1)
+    Sys.sleep(pause)
   }
-  
-  #Sys.sleep(pause*5)
   
   if(verbose==TRUE) print("Moving on... extracting data...")
   
