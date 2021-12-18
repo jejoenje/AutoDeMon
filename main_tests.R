@@ -14,11 +14,11 @@ demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 
 switchOperatingGroup(sel = "Tay Ringing Group")
 
-z <- find_ring("GR50844")
+z <- find_ring("GC86435")
 
 ### Testing extracting from Ringing Recoveries:
 
-sel <- "GR50844"
+sel <- "GC86435"
   
 remDr$navigate(
   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
