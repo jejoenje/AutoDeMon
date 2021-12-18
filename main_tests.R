@@ -14,7 +14,7 @@ demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 
 switchOperatingGroup(sel = "Tay Ringing Group")
 
-z <- find_Ring("GR50844")
+z <- find_ring("GR50844")
 
 ### Testing extracting from Ringing Recoveries:
 

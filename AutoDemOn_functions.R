@@ -95,10 +95,7 @@ switchOperatingGroup <- function(sel) {
   
 }
 
-
-
-
-find_Ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
+find_ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
   
   loginStatusCheck()
   
