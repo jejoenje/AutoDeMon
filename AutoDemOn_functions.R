@@ -1,3 +1,5 @@
+library(openxlsx)
+
 ext_colourMarkString <- function(el) {
   
   cm_vec1 <- c("LB","RB","LA","RA")
@@ -326,3 +328,5 @@ summariseReports <- function(date_filter, verbose = T, pause=0.5) {
   return(alldat)
   
 }
+
+

@@ -4,7 +4,7 @@ library(rvest)
 
 source("AutoDemOn_functions.R")
 rD <- rsDriver(
-      port = 4480L,
+      port = 4479L,
       browser = c("firefox"),
       version = "latest",
     )
