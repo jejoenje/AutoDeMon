@@ -73,7 +73,7 @@ ifield <- remDr$findElements("id", "settingsButton")
 ifield[[1]]$clickElement()
 
 ###### ITERATE DATA ENTRY:
-i <- 4
+i <- 1
 
 dd_i <- dd[i,]
 
@@ -102,9 +102,10 @@ Sys.sleep(0.5)
 #ifield <- remDr$findElements("id", "s2id_autogen7")
 
 ifield <- remDr$findElements("class name", "select2-arrow")
+loc_field <- ifield
 ifield[[3]]$clickElement()
 Sys.sleep(0.5)
-ifield <- remDr$findElements("id", "s2id_autogen8_search")   #### THIS LOCATOR DOES NOT WORK ON SECOND GOES ETC
+ifield <- remDr$findElements("class name", "select2-focused")
 ifield[[1]]$sendKeysToElement(list(dd[i,"SiteCode"], key = "enter"))
 Sys.sleep(0.5)
 
