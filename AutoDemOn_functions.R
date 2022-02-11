@@ -1,4 +1,5 @@
 library(openxlsx)
+library(stringr)
 
 ext_colourMarkString <- function(el) {
   
