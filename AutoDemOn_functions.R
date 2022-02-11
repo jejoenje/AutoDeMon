@@ -250,27 +250,46 @@ summariseReports <- function(date_filter, verbose = T, pause=0.5) {
   }
   alldat <- as.data.frame(NULL)
   
+  recs <- remDr$findElements("class name", "sorting_1")
+  
+  ### Keep base window ref
+  base_window <- remDr$getWindowHandles()
+  
   for(i in 1:max_recs) {
     
     print(paste("Processing record", i, "out of", max_recs,"..."))
     
-    recs <- remDr$findElements(using = "tag name", value="tr")  
-    Sys.sleep(pause)
-    rec <- recs[[i+2]]                            ### Need to start with 3rd rec in list (first two are header and blank)
-    base_dat <- rec$getElementText()[[1]]
-    Sys.sleep(pause)
-    base_dat <- strsplit(base_dat, " ")[[1]]
-    type <- base_dat[1]
-    ring <- base_dat[4]
+    #recs <- remDr$findElements(using = "tag name", value="tr")  
+    #Sys.sleep(pause)
+    #rec <- recs[[i+2]]                            ### Need to start with 3rd rec in list (first two are header and blank)
     
-    rec$clickElement()
+    ### Click report list
+    recs[[i]]$clickElement()
+    
+    ### Switch to report window:
     remDr$switchToWindow(remDr$getWindowHandles()[[2]])
-    if(verbose==TRUE) print("Waiting for record detail...")
-    Sys.sleep(pause*3)
     
+    # 
+    # base_dat <- recs[[i]]$getElementText()[[1]]
+    # 
+    # Sys.sleep(pause)
+    # base_dat <- strsplit(base_dat, " ")[[1]]
+    # type <- base_dat[1]
+    # ring <- base_dat[4]
+    # 
+    # rec$clickElement()
+    # remDr$switchToWindow(remDr$getWindowHandles()[[2]])
+    # if(verbose==TRUE) print("Waiting for record detail...")
+    # Sys.sleep(pause*3)
+
     if(verbose==TRUE) print("Start extracting data...")
     
-    ageSexSection <- remDr$findElements(using = "class", value = "ageSexSection")
+    quickSummarySection <- remDr$findElement(using = "class name", value = "quickSummarySection")
+    
+    
+    
+    
+    
     Sys.sleep(pause)
     ageSexSection <- ageSexSection[[1]]$getElementText()[[1]]
     age <- paste(strsplit(ageSexSection," ")[[1]][1:2], collapse=" ")
