@@ -52,12 +52,16 @@ dd <- d[d$Type == "Sighting" | d$Type == "Recovery",]
 dd <- dd[is.na(dd$SUBM),]
 ### drop levels
 dd <- droplevels(dd)
-levels(dd$Type)
+#levels(dd$Type)
 ### Pick values with site code:
 dd <- dd[!is.na(dd$SiteCode),]
+### Re-format dates:
+#dd$Date <- format(as.Date(dd$Date,"%d/%m/%Y"),"%d/%m/%Y")
 
 ### Pick the most recent 10:
-dd <- head(dd[order(dd$Date, decreasing = T),],10)
+#dd <- head(dd[order(dd$Date, decreasing = T),],10)
+dd <- tail(dd,10)
+dd <- dd[order(dd$idx,decreasing = T),]
 
 ### Data entry in DEFAULT ALL FIELDS setup:
 remDr$navigate("https://app.bto.org/demography/bto/main/data-entry/list-style/list-input.jsp")
@@ -75,6 +79,10 @@ ifield[[1]]$clickElement()
 ###### ITERATE DATA ENTRY:
 i <- 1
 
+# This is a record of which dd_i was succesfully submitted
+# (to ensure we don't "tick off" indices that had to be skipped with erroneous species)
+i_complete <- as.vector(NULL)
+
 dd_i <- dd[i,]
 
 # Record type:
@@ -85,24 +93,25 @@ ifield[[1]]$sendKeysToElement(list("F", key="enter"))
 ifield <- remDr$findElements("name", "ring_no")
 ifield[[1]]$sendKeysToElement(list(dd_i[,"Metal.Ring"], key="tab"))
 Sys.sleep(0.5)
+
+# Check species name as autofilled:
+ifield <- remDr$findElement("name", "species_name")
+output_species <- ifield$getElementAttribute("value")[[1]]
+if(dd_i[,"Species"]=="HERGU") input_species = "Herring Gull"
+if(dd_i[,"Species"]=="LBBGU") input_species = "Lesser black-backed Gull"
+### This should really be a "loop break" but this is just for testing purposes atm:
+if(input_species != output_species) { stop() } else { i_complete <- c(i_complete, dd_i[,"idx"]) }
+
+
 # Visit date:
 ifield <- remDr$findElements("name", "visit_date")
 ifield[[1]]$clearElement()
-ifield[[1]]$sendKeysToElement(list(format(dd_i[,"Date"],"%d/%m/%Y"), key="tab"))
+ifield[[1]]$sendKeysToElement(list(format(as.Date(dd_i[,"Date"],"%d/%m/%Y"),"%d/%m/%Y"), key="tab"))
 ifield[[1]]$click()
 Sys.sleep(0.5)
 
-# ifield <- remDr$findElements("class name", "chosenFieldSetup")
-# ifield[[11]]$clickElement()
-
 # Location:
-### Tab to it
-#ifield <- remDr$findElements("name", "capture_time")
-#ifield[[1]]$sendKeysToElement(list("", key="tab"))
-#ifield <- remDr$findElements("id", "s2id_autogen7")
-
 ifield <- remDr$findElements("class name", "select2-arrow")
-loc_field <- ifield
 ifield[[3]]$clickElement()
 Sys.sleep(0.5)
 ifield <- remDr$findElements("class name", "select2-focused")
@@ -128,14 +137,16 @@ Sys.sleep(0.5)
 
 ### Finder name
 ifield <- remDr$findElements("name", "finder_name")
+ifield[[1]]$clearElement()
 ifield[[1]]$sendKeysToElement(list(dd[i,"Observer/Notes"], key = "tab"))
 Sys.sleep(0.5)
+
 
 ### NEEDS TO BE DONE AFTER ITERATION LOOP
 
 ### "Tick off" value in raw input data:
-d[which(d[,"idx"]==dd_i[,"idx"]),"SUBM"] <- "autodemon"
-d$Date <- as.character(format(d$Date, "%d/%m/%Y"))
+d[which(d[,"idx"] %in% i_complete),"SUBM"] <- "autodemon"
+d$Date <- as.character(format(as.Date(d$Date,"%d/%m/%Y"),"%d/%m/%Y"))
 ### Save to output
 writeData(OUT, sheet = sel_sheet, d )
 saveWorkbook(OUT, file = paste0(dat_file_folder,"NESgulls_autodemon.xlsx"), overwrite = TRUE)
