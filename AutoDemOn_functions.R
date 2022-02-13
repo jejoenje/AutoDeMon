@@ -349,4 +349,58 @@ summariseReports <- function(date_filter, verbose = T, pause=0.5) {
   
 }
 
+### Parsing BTO recovery summary report
+### WORKS OK WHEN PARSING DOWNLOADED REPORT.
+### DOESNT CURRENTLY SEEM TO WORK ON in-DemOn TESTS
+parseReport <- function(pageurl) {
+  
+  dat <- read_html(pageurl)
+  
+  quickSummarySection <- html_nodes(dat, "div.quickSummarySection table")
+  quickSumamrySection <- as.data.frame(html_table(quickSummarySection))
+  RING <- quickSumamrySection[1,6]
+  SP <- quickSumamrySection[1,2]
+  
+  ringingDateSection <- html_nodes(dat, "div.ringingDateSection span")
+  ringingDateSection <- html_text(ringingDateSection) 
+  RDATE <- strsplit(ringingDateSection, ":\\ ")[[1]][2]
+  RDATE <- strsplit(RDATE, "\\ ")[[1]][1]
+  
+  regPlaceCodeSection <- html_nodes(dat, "div.regPlaceCodeSection span")
+  place_text <- html_text(regPlaceCodeSection)
+  place <- paste(place_text[(grep("Place code", place_text)+1):length(place_text)], collapse = ", ")
+  RPLACE <- gsub("Site name: ", "", place)
+  
+  findingDat <- html_nodes(dat, "div.spanRow")
+  fDateLoc <- grep("Finding date", html_text(findingDat))
+  fdate <- html_text(findingDat[fDateLoc])
+  fdate <- gsub("\r\n", "", fdate)
+  fdate <- gsub("Finding date: ", "", fdate)
+  fdate <- gsub("\\  ", "", fdate)
+  FDATE <- strsplit(fdate, " ")[[1]][1]
+  
+  fPlaceLoc <- grep("Place code", html_text(findingDat))
+  fplace <- html_text(findingDat[fPlaceLoc[2]])
+  fplace <- sub(".*Site name: ", "", fplace)
+  fplace <- gsub("\r\n", "", fplace)
+  FPLACE <- gsub("  ", "", fplace)
+  
+  fcondition <- html_nodes(dat, "div.findingBirdCondition")
+  fcondition <- html_text(fcondition)
+  fcondition <- strsplit(fcondition, "\r")[[1]][3]
+  fcondition <- gsub("\n", "", fcondition)
+  FCONDITION <- gsub("\\  ", "", fcondition)
+  
+  OUT <- 
+    data.frame(RING = RING, 
+               SP = SP, 
+               RDATE = RDATE, 
+               RPLACE = RPLACE, 
+               FDATE = FDATE, 
+               FPLACE = FPLACE, 
+               FCONDITION = FCONDITION)
+  
+  return(OUT)
+} 
+
 

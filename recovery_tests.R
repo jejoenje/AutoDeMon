@@ -16,4 +16,3 @@ demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 loginStatusCheck()
 
 switchOperatingGroup("Tay Ringing Group")
-
