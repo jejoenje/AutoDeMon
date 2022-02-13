@@ -22,7 +22,12 @@ dat_file_folder <- "../NESgulls/data/base/"
 dat_file_name <- "NESgulls.xlsx"
 dat_file <- paste0(dat_file_folder, dat_file_name)
 ### BACKUP DATA FILE
-file.copy(dat_file, paste0(dat_file_folder, gsub("\\.", "_backup.", dat_file_name)), overwrite = TRUE)
+# Create backup file name with date:
+backup_dt <- gsub("-", "", Sys.time())
+backup_dt <- gsub(":", "", backup_dt)
+backup_dt <- gsub("\\ ", "", backup_dt)
+backup_file_name <- paste0("_",backup_dt,"_backup.")
+file.copy(dat_file, paste0(dat_file_folder, gsub("\\.", backup_file_name, dat_file_name)), overwrite = TRUE)
 
 ### Load data (ALL - need to do this to reconstruct):
 sheet_names <- getSheetNames(dat_file)
@@ -47,7 +52,7 @@ d <- DAT[[sel_sheet]]
 ### Process input data
 d$Type <- factor(d$Type)
 ### Sightings or Recoveries only:
-dd <- d[d$Type == "Sighting" | d$Type == "Recovery",]
+dd <- d[d$Type == "Sighting",]
 ### Select unsubmitted data
 dd <- dd[is.na(dd$SUBM),]
 ### drop levels
@@ -76,12 +81,15 @@ ifield[[1]]$sendKeysToElement(list("CRING RESIGHTINGS GULLS"))
 ifield <- remDr$findElements("id", "settingsButton")
 ifield[[1]]$clickElement()
 
-###### ITERATE DATA ENTRY:
-i <- 1
 
 # This is a record of which dd_i was succesfully submitted
 # (to ensure we don't "tick off" indices that had to be skipped with erroneous species)
 i_complete <- as.vector(NULL)
+
+###### ITERATE DATA ENTRY:
+i <- 0
+
+i <- i+1
 
 dd_i <- dd[i,]
 
@@ -149,4 +157,4 @@ d[which(d[,"idx"] %in% i_complete),"SUBM"] <- "autodemon"
 d$Date <- as.character(format(as.Date(d$Date,"%d/%m/%Y"),"%d/%m/%Y"))
 ### Save to output
 writeData(OUT, sheet = sel_sheet, d )
-saveWorkbook(OUT, file = paste0(dat_file_folder,"NESgulls_autodemon.xlsx"), overwrite = TRUE)
+saveWorkbook(OUT, file = paste0(dat_file_folder,"NESgulls.xlsx"), overwrite = TRUE)
