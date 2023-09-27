@@ -3,11 +3,11 @@ library(XML)
 library(rvest)
 
 source("AutoDemOn_functions.R")
-rD <- rsDriver(
-      port = 4479L,
-      browser = c("firefox"),
-      version = "latest",
-    )
+# rD <- rsDriver(browser = "chrome",
+#                port = 2122L
+#                #chromever  = "107.0.5304.121",
+#                )
+rD <- rsDriver(browser="firefox", port=4555L, verbose=F, chromever = NULL)
 remDr <- rD$client
 
 demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
