@@ -1,29 +1,26 @@
 library(openxlsx)
 library(stringr)
 
-ext_colourMarkString <- function(el) {
-  
-  cm_vec1 <- c("LB","RB","LA","RA")
-  cm_vec2 <- rep("",4)
+extract_colour_mark <- function(el) {
+  cm_vec1 <- c("LB", "RB", "LA", "RA")
+  cm_vec2 <- rep("", 4)
   cm_vec <- cbind(cm_vec1, cm_vec2)
-  
-  for(i in 1:4) {
+  for (i in 1:4) {
     txt <- el[[i]]$getElementText()[[1]]
-    if(txt!="") {
-      cm_vec[i,2] <- tail(strsplit(txt, " ")[[1]],1)  
-    } 
+    if (txt != "") {
+      cm_vec[i, 2] <- tail(strsplit(txt, " ")[[1]], 1)
+    }
   }
-  
-  cm_non_blank <- which(cm_vec[,2]!="")
-  
-  if(length(cm_non_blank)>1) {
-    cm <- paste(apply(cm_vec[cm_non_blank,],1,function(x) paste(x,collapse="")),collapse=";")
+  cm_non_blank <- which(cm_vec[, 2] != "")
+
+  if (length(cm_non_blank) > 1)  {
+    cm <- paste(apply(cm_vec[cm_non_blank, ], 1, 
+                      function(x) paste(x, collapse = "")),
+                collapse = ";")
   } else {
-    cm <- paste(as.matrix(cm_vec[cm_non_blank,]),collapse="")
+    cm <- paste(as.matrix(cm_vec[cm_non_blank, ]), collapse = "")
   }
-  
   return(cm)
-  
 }
 
 demonLogin <- function(u=NULL, p=NULL) {
@@ -125,7 +122,7 @@ find_ring <- function(r, s=NULL, date_lookup=NULL, verbose = TRUE, pause = 1) {
   }
   
   selectB <- remDr$findElements(using = "class", 'btn-group')
-  acc_filter <- which(recordFilters2 == "Accepted")
+  acc_filter <- which(recordFilters2 == "Accepted")-1
   ### Select "accepted" button using index found above:
   selectB[[acc_filter]]$clickElement()
   if(verbose==TRUE) print("Done setting search filters...")
@@ -327,7 +324,7 @@ summariseReports <- function(date_filter, verbose = T, pause=0.5) {
     fplace <- tail(fplace,1)
     
     cmarks <- remDr$findElements("class", "colourMarks")
-    cm <- ext_colourMarkString(cmarks)
+    cm <- extract_colour_mark(cmarks)
     
     # recdat <- list(type = type, sp = sp, ring = ring, cm = cm, rdate = rdate, 
     #                rplace = rplace, agesex=agesex, fdate = fdate, fplace = fplace)
