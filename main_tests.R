@@ -3,18 +3,17 @@ library(XML)
 library(rvest)
 
 source("AutoDemOn_functions.R")
-# rD <- rsDriver(browser = "chrome",
-#                port = 2122L
-#                #chromever  = "107.0.5304.121",
-#                )
-rD <- rsDriver(browser="firefox", port=4555L, verbose=F, chromever = NULL)
+rD <- rsDriver(browser="firefox",
+               port = 4555L,
+               verbose = FALSE,
+               chromever = NULL)
 remDr <- rD$client
 
-demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
+demon_login(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 
-switchOperatingGroup(sel = "Tay Ringing Group")
+switch_op_group(sel = "Tay Ringing Group")
 
-z <- find_ring("GC86435")
+z <- find_ring("GC86435", verbose = TRUE)
 
 ### Testing extracting from Ringing Recoveries:
 
