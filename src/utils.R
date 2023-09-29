@@ -88,10 +88,10 @@ switch_op_group <- function(sel) {
 }
 
 waiter <- function(driver, elementtype, elementname, pause=1, return_data = TRUE) {
-  res <- NULL
-  while (is.null(res)) {
+  res <- list()
+  while (length(res) == 0) {
     suppressMessages({
-      try({res <- driver$findElement(elementtype, elementname)},
+      try({res <- driver$findElements(elementtype, elementname)},
                                     silent = TRUE)
     })
     Sys.sleep(1)
@@ -164,10 +164,14 @@ find_ring <- function(r, s = NULL, date_lookup = NULL,
 
   if (verbose == TRUE) print("Waiting for selected data to load...")
 
-  waiter(driver = remDr, elementtype = "id",
-         elementname = "resultTable_length", return_data = FALSE)
-
-
+  dat <- list()
+  while (length(dat) == 0) {
+    suppressMessages({
+      try({dat <- remDr$findElements("class", "dataTables_scroll")},
+                                    silent = TRUE)
+    })
+    Sys.sleep(1)
+  }
   if (verbose == TRUE) print("Moving on... extracting data...")
 
   dat <- remDr$findElements("class", "dataTables_scroll")
@@ -176,7 +180,7 @@ find_ring <- function(r, s = NULL, date_lookup = NULL,
   dat_tab <- dat_tab[[2]]
 
   if (nrow(dat_tab) > 1) {
-    print("There is more than 1 record for this date/species combination...!")
+    #print("There is more than 1 record for this date/species combination...!")
 
     fulltab <- remDr$findElements(using = "xpath",
                   '//*[contains(text(),"Raw fullscreen table")]')
@@ -351,17 +355,81 @@ summariseReports <- function(date_filter, verbose = T, pause=0.5) {
   
 }
 
-### Parsing BTO recovery summary report
-### WORKS OK WHEN PARSING DOWNLOADED REPORT.
-### DOESNT CURRENTLY SEEM TO WORK ON in-DemOn TESTS
-parseReport <- function(pageurl) {
+find_sightings <- function(ring) {
+
+  login_status_check()
+
+  remDr$navigate(
+  "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
+
+  rtab <- waiter(driver = remDr, elementtype = "id", "reportTable")
+
+  rtab <- remDr$findElements("id", "reportTable")
+  rtab_h <- rtab[[1]]$getElementAttribute("outerHTML")
+  rtab_names <- rtab_h[[1]] %>%
+    read_html() %>%
+    html_table() %>%
+    as.data.frame() %>%
+    names()
+  ring_filter <- which(rtab_names == "Ring.No")
+  ftab <- remDr$findElements("class", "tableFilterBox")
+  ftab[[ring_filter]]$sendKeysToElement(list(ring, key = "enter"))
+
+  # ### Get number of records to show and set to 100 (element 4)
+  no_show <- remDr$findElements("css", "#reportTable_length option")[[4]]
+  no_show$clickElement()
+
+  ### Check whether no. of recs exceeds max page limit - if so, display warning
+  displayed <- remDr$findElements("class", "dataTables_info")
+  displayed <- displayed[[1]]$getElementText()[[1]]
+  displayed <- as.numeric(str_extract_all(displayed, "[0-9]+")[[1]][1:3])
+  max_recs <- displayed[2]
+  if(displayed[2] == displayed[3]) {
+    #print(paste("Showing all records for selection: ",max_recs))
+  } else {
+    print("Warning: There are more than 100 reports for the current selection - this is not currently supported. Only the first 100 will be processed.")
+  }
+
+  ### Re-load displayed sightings table
+  recs <- remDr$findElements("class name", "sorting_1")
+  # ### Click first element in sightings list:
+  sight_dat <- as.data.frame(NULL)
+  for (i in 1:max_recs) {
+    if (verbose == TRUE) {
+      sprintf("Processing sighting %s of %s", i, max_recs)
+    }
+    recs[[i]]$clickElement()
+    waiter(remDr, "id", "content", return_data = FALSE, pause = 0.5)
+    ### Need to switch tab now
+    main_tab <- remDr$getWindowHandles()[[1]]
+    switch_to <- remDr$getWindowHandles()[[2]]
+    remDr$switchToWindow(switch_to)
+    ### Parse data and add to output
+    dat_i <- parse_report()
+    sight_dat <- rbind(sight_dat, dat_i)
+    ### Close and back to Main
+    remDr$closeWindow()
+    remDr$switchToWindow(main_tab)
+  }
+
+  return(sight_dat)
   
-  dat <- read_html(pageurl)
+}
+
+### Parsing BTO recovery summary report.
+### Works either on downloaded report (pageurl) or passing in web driver obj pointing at open report (driver)
+parse_report <- function(pageurl = NULL) {
   
+  if (!is.null(pageurl)) {
+    dat <- read_html(pageurl)
+  } else {
+    dat <- read_html(remDr$getPageSource()[[1]])
+  }
+    
   quickSummarySection <- html_nodes(dat, "div.quickSummarySection table")
-  quickSumamrySection <- as.data.frame(html_table(quickSummarySection))
-  RING <- quickSumamrySection[1,6]
-  SP <- quickSumamrySection[1,2]
+  quickSummarySection <- as.data.frame(html_table(quickSummarySection))
+  RING <- quickSummarySection[1,6]
+  SP <- quickSummarySection[1,2]
   
   ringingDateSection <- html_nodes(dat, "div.ringingDateSection span")
   ringingDateSection <- html_text(ringingDateSection) 
@@ -389,7 +457,7 @@ parseReport <- function(pageurl) {
   
   fcondition <- html_nodes(dat, "div.findingBirdCondition")
   fcondition <- html_text(fcondition)
-  fcondition <- strsplit(fcondition, "\r")[[1]][3]
+  fcondition <- strsplit(fcondition, "\\s{2,}")[[1]][3]
   fcondition <- gsub("\n", "", fcondition)
   FCONDITION <- gsub("\\  ", "", fcondition)
   
@@ -403,6 +471,4 @@ parseReport <- function(pageurl) {
                FCONDITION = FCONDITION)
   
   return(OUT)
-} 
-
-
+}

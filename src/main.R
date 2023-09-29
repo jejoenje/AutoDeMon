@@ -3,57 +3,37 @@ library(XML)
 library(rvest)
 
 source("src/utils.R")
-rD <- rsDriver(
-  browser = "firefox",
-  port = 4555L,
-  verbose = FALSE,
-  chromever = NULL
-)
-remDr <- rD$client
+
+### Docker running
+remDr <- remoteDriver(port = 4445L)
+remDr$open(silent = TRUE)
+
+### Standalone running (no Docker)
+# rD <- rsDriver(browser ="firefox",
+#                port = 4556L,
+#                verbose = FALSE,
+#                chromever = NULL)
+# remDr <- rD$client
 
 demon_login(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 
 switch_op_group(sel = "Tay Ringing Group")
 
-z <- find_ring("GC86435", verbose = TRUE)
+z <- find_ring("GR50165", verbose = TRUE)
 
 ### Testing extracting from Ringing Recoveries:
 
-# sel <- "GC86435"
+x <- find_sightings(ring = "GR50165")
 
-# remDr$navigate(
-#   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
 
-# rtab <- remDr$findElements("id", "reportTable")
-# rtab_h <- rtab[[1]]$getElementAttribute("outerHTML")
-# rtab_names <- rtab_h[[1]] %>%
-#   read_html() %>%
-#   html_table() %>%
-#   as.data.frame() %>%
-#   names()
-# ring_filter <- which(rtab_names == "Ring.No")
-# ftab <- remDr$findElements("class", "tableFilterBox")
-# ftab[[ring_filter]]$sendKeysToElement(list(sel, key = "enter"))
+sum_section <- remDr$findElements("class", "quickSummarySection")
+sum_section_h <- sum_section[[1]]$getElementAttribute("outerHTML")[[1]]
+sum_dat <- sum_section_h %>%
+  read_html() %>%
+  html_table() %>%
+  as.data.frame()
+ring <- sum_dat[1, 6]
 
-# ### Get number of records to show and set to 100 (element 4)
-# no_show <- remDr$findElements("css", "#reportTable_length option")[[4]]
-# no_show$clickElement()
-
-# ### Click first element in sightings list:
-# rtab <- remDr$findElements("id", "reportTable")
-# rtab[[1]]$clickElement()
-
-# ### Need to switch tab now
-# switch_to <- remDr$getWindowHandles()[[2]]
-# remDr$switchToWindow(switch_to)
-
-# sum_section <- remDr$findElements("class", "quickSummarySection")
-# sum_section_h <- sum_section[[1]]$getElementAttribute("outerHTML")[[1]]
-# sum_dat <- sum_section_h %>%
-#   read_html() %>%
-#   html_table() %>%
-#   as.data.frame()
-# ring <- sum_dat[1, 6]
 
 # as_section <- remDr$findElements(
 #   using = "class",
