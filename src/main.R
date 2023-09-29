@@ -2,11 +2,13 @@ library(RSelenium)
 library(XML)
 library(rvest)
 
-source("AutoDemOn_functions.R")
-rD <- rsDriver(browser="firefox",
-               port = 4555L,
-               verbose = FALSE,
-               chromever = NULL)
+source("src/utils.R")
+rD <- rsDriver(
+  browser = "firefox",
+  port = 4555L,
+  verbose = FALSE,
+  chromever = NULL
+)
 remDr <- rD$client
 
 demon_login(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
@@ -18,7 +20,7 @@ z <- find_ring("GC86435", verbose = TRUE)
 ### Testing extracting from Ringing Recoveries:
 
 # sel <- "GC86435"
-  
+
 # remDr$navigate(
 #   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
 
@@ -94,4 +96,3 @@ z <- find_ring("GC86435", verbose = TRUE)
 # cm <- ext_colourMarkString(cmarks)
 
 # recdat <- data.frame(sp, ring, cm, rdate, rplace, agesex, fdate, fplace)
-
