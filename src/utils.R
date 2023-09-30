@@ -93,8 +93,9 @@ waiter <- function(driver, elementtype, elementname, pause=1, return_data = TRUE
     suppressMessages({
       try({res <- driver$findElements(elementtype, elementname)},
                                     silent = TRUE)
+      Sys.sleep(1)
     })
-    Sys.sleep(1)
+    
   }
   if (return_data == TRUE) return(res)
 }
@@ -355,65 +356,94 @@ summariseReports <- function(date_filter, verbose = T, pause=0.5) {
   
 }
 
-find_sightings <- function(ring) {
+extract_entry_counts <- function(s) {
+  s <- s[[1]]$getElementText()[[1]]
+  s <- gsub(",","",s)
+  s <- strsplit(s, " ")[[1]]
+  suppressWarnings({
+    s <- as.numeric(s)
+  })
+  n <- s[!is.na(s)]
+
+  out <- list(i = n[1], n = n[2], N = n[3])
+  if(length(n)>3) {
+    out$K <- n[4]
+  }
+
+  return(out)
+}
+
+find_sightings <- function(ring, verbose = FALSE) {
 
   login_status_check()
 
   remDr$navigate(
   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
+  Sys.sleep(3)
+  #waiter(driver = remDr, elementtype = "id", "reportTable", return_data = FALSE)
 
-  rtab <- waiter(driver = remDr, elementtype = "id", "reportTable")
-
-  rtab <- remDr$findElements("id", "reportTable")
-  rtab_h <- rtab[[1]]$getElementAttribute("outerHTML")
-  rtab_names <- rtab_h[[1]] %>%
-    read_html() %>%
-    html_table() %>%
-    as.data.frame() %>%
-    names()
-  ring_filter <- which(rtab_names == "Ring.No")
+  #rtab <- remDr$findElements("id", "reportTable")
+  # rtab_h <- rtab[[1]]$getElementAttribute("outerHTML")
+  # rtab_names <- rtab_h[[1]] %>%
+  #   read_html() %>%
+  #   html_table() %>%
+  #   as.data.frame() %>%
+  #   names()
+  #ring_filter <- which(rtab_names == "Ring.No")
+  ring_filter <- 3
+  Sys.sleep(0.5)
   ftab <- remDr$findElements("class", "tableFilterBox")
-  ftab[[ring_filter]]$sendKeysToElement(list(ring, key = "enter"))
+  #ring_selector <- ftab[[3]]
+  Sys.sleep(1)
+  ftab[[3]]$clickElement()
+  ftab[[3]]$clearElement()
+  ftab[[3]]$sendKeysToElement(list(ring))
+  #Sys.sleep(1)
 
-  # ### Get number of records to show and set to 100 (element 4)
-  no_show <- remDr$findElements("css", "#reportTable_length option")[[4]]
-  no_show$clickElement()
+  # for(i in 1:5) {
+  #   print(i)
+  #   ring_selector$sendKeysToElement(list(ring))
+  #   Sys.sleep(1)
+  # }
 
   ### Check whether no. of recs exceeds max page limit - if so, display warning
   displayed <- remDr$findElements("class", "dataTables_info")
-  displayed <- displayed[[1]]$getElementText()[[1]]
-  displayed <- as.numeric(str_extract_all(displayed, "[0-9]+")[[1]][1:3])
-  max_recs <- displayed[2]
-  if(displayed[2] == displayed[3]) {
-    #print(paste("Showing all records for selection: ",max_recs))
+  displayed <- extract_entry_counts(displayed)
+
+  if((displayed$N > 99)) {
+    if(verbose == TRUE) print("Warning: There are more than 100 reports for the current selection - this is not currently supported.") # nolint
+    return(NULL)
   } else {
-    print("Warning: There are more than 100 reports for the current selection - this is not currently supported. Only the first 100 will be processed.")
-  }
+    if (displayed$N > 0) {
+      ### Re-load displayed sightings table
+      recs <- remDr$findElements("class name", "sorting_1")
+      # ### Click first element in sightings list:
+      sight_dat <- as.data.frame(NULL)
+      for (i in 1:displayed$N) {
+        if (verbose == TRUE) {
+          sprintf("Processing sighting %s of %s", i, displayed$N)
+        }
+        recs[[i]]$clickElement()
+        waiter(remDr, "id", "content", return_data = FALSE, pause = 0.5)
+        ### Need to switch tab now
+        main_tab <- remDr$getWindowHandles()[[1]]
+        switch_to <- remDr$getWindowHandles()[[2]]
+        remDr$switchToWindow(switch_to)
+        ### Parse data and add to output
+        dat_i <- parse_report()
+        sight_dat <- rbind(sight_dat, dat_i)
+        ### Close and back to Main
+        remDr$closeWindow()
+        remDr$switchToWindow(main_tab)
+      }
+      return(sight_dat)
 
-  ### Re-load displayed sightings table
-  recs <- remDr$findElements("class name", "sorting_1")
-  # ### Click first element in sightings list:
-  sight_dat <- as.data.frame(NULL)
-  for (i in 1:max_recs) {
-    if (verbose == TRUE) {
-      sprintf("Processing sighting %s of %s", i, max_recs)
+    } else {
+      if(verbose == TRUE) print("No sighting records found for given ring!")
+      return(NULL)
     }
-    recs[[i]]$clickElement()
-    waiter(remDr, "id", "content", return_data = FALSE, pause = 0.5)
-    ### Need to switch tab now
-    main_tab <- remDr$getWindowHandles()[[1]]
-    switch_to <- remDr$getWindowHandles()[[2]]
-    remDr$switchToWindow(switch_to)
-    ### Parse data and add to output
-    dat_i <- parse_report()
-    sight_dat <- rbind(sight_dat, dat_i)
-    ### Close and back to Main
-    remDr$closeWindow()
-    remDr$switchToWindow(main_tab)
   }
 
-  return(sight_dat)
-  
 }
 
 ### Parsing BTO recovery summary report.

@@ -19,11 +19,18 @@ demon_login(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
 
 switch_op_group(sel = "Tay Ringing Group")
 
-z <- find_ring("GR50165", verbose = TRUE)
+#r <- "GR50165"
+#r <- "GR24996"
+#r <- "GR24997"
+#r <- "GR24999"
+#r <- "GR24971"
+r <- "GR24954"
+
+z <- find_ring(r, verbose = TRUE)
 
 ### Testing extracting from Ringing Recoveries:
 
-x <- find_sightings(ring = "GR50165")
+x <- find_sightings(ring = r, verbose = TRUE)
 
 
 sum_section <- remDr$findElements("class", "quickSummarySection")
