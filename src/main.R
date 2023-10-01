@@ -27,9 +27,12 @@ switch_op_group(sel = "Tay Ringing Group")
 #r <- "GR24954" ### doesn't?
 #r <- "GR24957"
 #r <- "GR24959"
-r <- "GC86401"
+#r <- "GC86401"
+r <- "GR88061"
+r2 <- "GR57316"
 
-z <- records(r, verbose = FALSE)
+z <- records(r, verbose = FALSE, date_lookup = "12/08/2015")
+y <- records(r2, verbose = FALSE, op_group = "Grampian Ringing Group", date_lookup = "05/06/2013")
 
 ### Testing extracting from Ringing Recoveries:
 

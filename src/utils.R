@@ -102,9 +102,16 @@ waiter <- function(driver, elementtype, elementname, pause=1, return_data = TRUE
 }
 
 records <- function(r, s = NULL, date_lookup = NULL, date_format = "%d/%m/%Y",
-                      verbose = TRUE, pause = 1) {
+                    op_group = NULL,
+                    verbose = TRUE, pause = 1) {
 
   login_status_check(verbose = verbose)
+
+  # Set desired operating group:
+  if (!is.null(op_group)) {
+    switch_op_group(op_group)
+    Sys.sleep(0.5)
+  }
 
   remDr$navigate("https://app.bto.org/demography/bto/main/search-ringing/search-ringing.jsp") # nolint
 
