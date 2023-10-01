@@ -101,7 +101,7 @@ waiter <- function(driver, elementtype, elementname, pause=1, return_data = TRUE
   if (return_data == TRUE) return(res)
 }
 
-find_ring <- function(r, s = NULL, date_lookup = NULL,
+records <- function(r, s = NULL, date_lookup = NULL, date_format = "%d/%m/%Y",
                       verbose = TRUE, pause = 1) {
 
   login_status_check(verbose = verbose)
@@ -128,7 +128,6 @@ find_ring <- function(r, s = NULL, date_lookup = NULL,
     }, silent = TRUE)
     Sys.sleep(pause / 2)
   }
-
   selectB <- remDr$findElements(using = "class", 'btn-group')
   acc_filter <- which(recordFilters2 == "Accepted") - 1
   ### Select "accepted" button using index found above:
@@ -145,7 +144,7 @@ find_ring <- function(r, s = NULL, date_lookup = NULL,
   if (!is.null(date_lookup)) {
     # Make sure date is formatted correctly:
     date_lookup <- as.vector(format(as.Date(date_lookup,
-                                            "%d-%b-%Y"),
+                                            date_format),
                                             "%d/%m/%Y")
                             )
 
@@ -406,7 +405,7 @@ recoveries <- function(ring, verbose = FALSE) {
   displayed <- remDr$findElements("class", "dataTables_info")
   displayed <- extract_entry_counts(displayed)
 
-  # Extract only if recs do not exceed 100 (ie filter likely incorrectly applied, also would need pageing)
+  # Extract only if recs do not exceed 100 (ie filter likely incorrectly applied, also would need pageing) # nolint
   if((displayed$N > 99)) {
     if(verbose == TRUE) print("Warning: There are more than 100 reports for the current selection - this is not currently supported.") # nolint
     return(NULL)
