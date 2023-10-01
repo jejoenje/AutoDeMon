@@ -381,7 +381,7 @@ recoveries <- function(ring, verbose = FALSE) {
   remDr$navigate(
   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
 
-  rtab <- waiter(driver = remDr, elementtype = "id", "reportTable", 
+  rtab <- waiter(driver = remDr, elementtype = "id", "reportTable",
                  return_data = TRUE, pause = 2)
 
   # Find "Ring no." filter box index:
@@ -447,28 +447,30 @@ recoveries <- function(ring, verbose = FALSE) {
 ### Parsing BTO recovery summary report.
 ### Works either on downloaded report (pageurl) or passing in web driver obj pointing at open report (driver)
 parse_report <- function(pageurl = NULL) {
-  
+
   if (!is.null(pageurl)) {
     dat <- read_html(pageurl)
   } else {
     dat <- read_html(remDr$getPageSource()[[1]])
   }
-    
+
   quickSummarySection <- html_nodes(dat, "div.quickSummarySection table")
   quickSummarySection <- as.data.frame(html_table(quickSummarySection))
-  RING <- quickSummarySection[1,6]
-  SP <- quickSummarySection[1,2]
-  
+  RING <- quickSummarySection[1, 6]
+  SP <- quickSummarySection[1, 2]
+
   ringingDateSection <- html_nodes(dat, "div.ringingDateSection span")
-  ringingDateSection <- html_text(ringingDateSection) 
+  ringingDateSection <- html_text(ringingDateSection)
   RDATE <- strsplit(ringingDateSection, ":\\ ")[[1]][2]
   RDATE <- strsplit(RDATE, "\\ ")[[1]][1]
-  
+
   regPlaceCodeSection <- html_nodes(dat, "div.regPlaceCodeSection span")
   place_text <- html_text(regPlaceCodeSection)
-  place <- paste(place_text[(grep("Place code", place_text)+1):length(place_text)], collapse = ", ")
+  place <- paste(place_text[(grep("Place code",
+                 place_text) + 1):length(place_text)],
+                 collapse = ", ")
   RPLACE <- gsub("Site name: ", "", place)
-  
+
   findingDat <- html_nodes(dat, "div.spanRow")
   fDateLoc <- grep("Finding date", html_text(findingDat))
   fdate <- html_text(findingDat[fDateLoc])
@@ -476,27 +478,27 @@ parse_report <- function(pageurl = NULL) {
   fdate <- gsub("Finding date: ", "", fdate)
   fdate <- gsub("\\  ", "", fdate)
   FDATE <- strsplit(fdate, " ")[[1]][1]
-  
+
   fPlaceLoc <- grep("Place code", html_text(findingDat))
   fplace <- html_text(findingDat[fPlaceLoc[2]])
   fplace <- sub(".*Site name: ", "", fplace)
   fplace <- gsub("\r\n", "", fplace)
   FPLACE <- gsub("  ", "", fplace)
-  
+
   fcondition <- html_nodes(dat, "div.findingBirdCondition")
   fcondition <- html_text(fcondition)
   fcondition <- strsplit(fcondition, "\\s{2,}")[[1]][3]
   fcondition <- gsub("\n", "", fcondition)
   FCONDITION <- gsub("\\  ", "", fcondition)
-  
-  OUT <- 
-    data.frame(RING = RING, 
-               SP = SP, 
-               RDATE = RDATE, 
-               RPLACE = RPLACE, 
-               FDATE = FDATE, 
-               FPLACE = FPLACE, 
+
+  OUT <-
+    data.frame(RING = RING,
+               SP = SP,
+               RDATE = RDATE,
+               RPLACE = RPLACE,
+               FDATE = FDATE,
+               FPLACE = FPLACE,
                FCONDITION = FCONDITION)
-  
+
   return(OUT)
 }
