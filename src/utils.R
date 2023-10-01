@@ -110,10 +110,15 @@ records <- function(ring = NULL, species = NULL, rtype = NULL, date_lookup = NUL
                     verbose = TRUE, pause = 1) {
 
   accepted_rtypes <- c("N", "S", "F")
-  if (!(rtype %in% accepted_rtypes)) {
-    stop("Error: `rtype` needs to be one of N, S or F.")
+  if(!is.null(rtype)) {
+    if (!(rtype %in% accepted_rtypes)) {
+      stop("Error: `rtype` needs to be one of N, S or F.")
+    }
+    if (rtype == "N") rtype <- "N - New bird"
+    if (rtype == "S") rtype <- "S - Standard recapture"
+    if (rtype == "F") rtype <- "F - Field"
   }
-
+  
   login_status_check(verbose = verbose)
 
   # Set desired operating group:
@@ -154,6 +159,7 @@ records <- function(ring = NULL, species = NULL, rtype = NULL, date_lookup = NUL
   # Set record type if requested
   if (!is.null(rtype)) {
     input_fields <- remDr$findElements("xpath", "//input")
+    Sys.sleep(pause/2)
     input_fields[[4]]$sendKeysToElement(list(rtype, key = "enter"))
   }
 
