@@ -46,7 +46,7 @@ demon_login <- function(u = NULL, p = NULL) {
   }
 }
 
-login_status_check <- function(verbose = TRUE) {
+login_status_check <- function(verbose = FALSE) {
   if (grepl("login", remDr$getCurrentUrl()[[1]])) {
     if (verbose == TRUE) print("Logged out, logging you back in...")
     demon_login()
@@ -93,17 +93,18 @@ waiter <- function(driver, elementtype, elementname, pause=1, return_data = TRUE
     suppressMessages({
       try({res <- driver$findElements(elementtype, elementname)},
                                     silent = TRUE)
-      Sys.sleep(1)
+      Sys.sleep(pause)
     })
     
   }
+  Sys.sleep(0.5)
   if (return_data == TRUE) return(res)
 }
 
 find_ring <- function(r, s = NULL, date_lookup = NULL,
                       verbose = TRUE, pause = 1) {
 
-  login_status_check()
+  login_status_check(verbose = verbose)
 
   remDr$navigate("https://app.bto.org/demography/bto/main/search-ringing/search-ringing.jsp") # nolint
 
@@ -373,51 +374,48 @@ extract_entry_counts <- function(s) {
   return(out)
 }
 
-find_sightings <- function(ring, verbose = FALSE) {
+recoveries <- function(ring, verbose = FALSE) {
 
-  login_status_check()
+  login_status_check(verbose = verbose)
 
   remDr$navigate(
   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
-  Sys.sleep(3)
-  #waiter(driver = remDr, elementtype = "id", "reportTable", return_data = FALSE)
 
-  #rtab <- remDr$findElements("id", "reportTable")
-  # rtab_h <- rtab[[1]]$getElementAttribute("outerHTML")
-  # rtab_names <- rtab_h[[1]] %>%
-  #   read_html() %>%
-  #   html_table() %>%
-  #   as.data.frame() %>%
-  #   names()
-  #ring_filter <- which(rtab_names == "Ring.No")
-  ring_filter <- 3
+  rtab <- waiter(driver = remDr, elementtype = "id", "reportTable", 
+                 return_data = TRUE, pause = 2)
+
+  # Find "Ring no." filter box index:
+  rtab_h <- rtab[[1]]$getElementAttribute("outerHTML")
+  rtab_names <- rtab_h[[1]] %>%
+    read_html() %>%
+    html_table() %>%
+    as.data.frame() %>%
+    names()
+  ring_filter <- which(rtab_names == "Ring.No")
+
+  # Set "Ring no." filter box:
+  # Hard sleep steps necessary to avoid breakage, apparently...
   Sys.sleep(0.5)
   ftab <- remDr$findElements("class", "tableFilterBox")
-  #ring_selector <- ftab[[3]]
-  Sys.sleep(1)
-  ftab[[3]]$clickElement()
-  ftab[[3]]$clearElement()
-  ftab[[3]]$sendKeysToElement(list(ring))
-  #Sys.sleep(1)
+  Sys.sleep(0.5)
+  ftab[[ring_filter]]$clickElement()
+  ftab[[ring_filter]]$clearElement()
+  ftab[[ring_filter]]$sendKeysToElement(list(ring))
 
-  # for(i in 1:5) {
-  #   print(i)
-  #   ring_selector$sendKeysToElement(list(ring))
-  #   Sys.sleep(1)
-  # }
-
-  ### Check whether no. of recs exceeds max page limit - if so, display warning
+  # Find no. recs displayed
   displayed <- remDr$findElements("class", "dataTables_info")
   displayed <- extract_entry_counts(displayed)
 
+  # Extract only if recs do not exceed 100 (ie filter likely incorrectly applied, also would need pageing)
   if((displayed$N > 99)) {
     if(verbose == TRUE) print("Warning: There are more than 100 reports for the current selection - this is not currently supported.") # nolint
     return(NULL)
   } else {
+    # Extract if more than zero records displayed
     if (displayed$N > 0) {
-      ### Re-load displayed sightings table
+      # Re-load displayed sightings table
       recs <- remDr$findElements("class name", "sorting_1")
-      # ### Click first element in sightings list:
+      # Iterate through sightings list:
       sight_dat <- as.data.frame(NULL)
       for (i in 1:displayed$N) {
         if (verbose == TRUE) {
@@ -425,14 +423,14 @@ find_sightings <- function(ring, verbose = FALSE) {
         }
         recs[[i]]$clickElement()
         waiter(remDr, "id", "content", return_data = FALSE, pause = 0.5)
-        ### Need to switch tab now
+        # Need to switch tab now
         main_tab <- remDr$getWindowHandles()[[1]]
         switch_to <- remDr$getWindowHandles()[[2]]
         remDr$switchToWindow(switch_to)
-        ### Parse data and add to output
+        # Parse data and add to output
         dat_i <- parse_report()
         sight_dat <- rbind(sight_dat, dat_i)
-        ### Close and back to Main
+        # Close and back to Main
         remDr$closeWindow()
         remDr$switchToWindow(main_tab)
       }
