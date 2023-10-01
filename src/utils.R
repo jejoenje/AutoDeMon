@@ -172,7 +172,7 @@ records <- function(ring = NULL, species = NULL, rtype = NULL, date_lookup = NUL
 
   # Set date to search for:
   if (!is.null(date_lookup)) {
-    if (class(date_lookup) == "character") {
+    if (length(date_lookup) == 1) {
       date_lookup <- list(date_lookup, date_lookup)
     }
     if (length(date_lookup) > 2) stop("More than two lookup dates supplied!")
