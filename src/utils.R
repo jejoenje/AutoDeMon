@@ -217,31 +217,23 @@ records <- function(ring = NULL, species = NULL, rtype = NULL, date_lookup = NUL
   dat_tab <- readHTMLTable(dat_html, as.data.frame = TRUE)
   dat_tab <- dat_tab[[2]]
 
-  if (nrow(dat_tab) > 1) {
-    #print("There is more than 1 record for this date/species combination...!")
+  # Extract data through HTML export table
+  fulltab <- remDr$findElements(using = "xpath",
+                '//*[contains(text(),"Raw fullscreen table")]')
+  fulltab[[1]]$clickElement()
+  fulltab <- remDr$findElements(using = "xpath",
+                '//*[contains(text(),"All data")]')
+  fulltab[[3]]$clickElement()
 
-    fulltab <- remDr$findElements(using = "xpath",
-                  '//*[contains(text(),"Raw fullscreen table")]')
-    fulltab[[1]]$clickElement()
-    fulltab <- remDr$findElements(using = "xpath",
-                  '//*[contains(text(),"All data")]')
-    fulltab[[3]]$clickElement()
+  remDr$switchToWindow(remDr$getWindowHandles()[[2]])
 
-    remDr$switchToWindow(remDr$getWindowHandles()[[2]])
+  dat_tab <- readHTMLTable(htmlParse(remDr$getPageSource()[[1]]))[[1]]
+  Sys.sleep(pause*7)
+  if (verbose == TRUE) print("Done.")
+  remDr$closeWindow()
+  remDr$switchToWindow(remDr$getWindowHandles()[[1]])
 
-    dat_tab <- readHTMLTable(htmlParse(remDr$getPageSource()[[1]]))[[1]]
-    Sys.sleep(pause*7)
-    if (verbose == TRUE) print("Done.")
-    remDr$closeWindow()
-    remDr$switchToWindow(remDr$getWindowHandles()[[1]])
-
-    return(dat_tab)
-
-  } else {
-    if (verbose == TRUE) print("Done.")
-
-    return(dat_tab)
-  }
+  return(dat_tab)
 
 }
 
