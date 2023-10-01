@@ -101,9 +101,18 @@ waiter <- function(driver, elementtype, elementname, pause=1, return_data = TRUE
   if (return_data == TRUE) return(res)
 }
 
-records <- function(r, s = NULL, date_lookup = NULL, date_format = "%d/%m/%Y",
+date_reformatter <- function(date_lookup, informat, outformat = "%d/%m/%Y") {
+  return(as.vector(format(as.Date(date_lookup, informat), outformat)))
+}
+
+records <- function(ring = NULL, species = NULL, rtype = NULL, date_lookup = NULL, date_format = "%d/%m/%Y",
                     op_group = NULL,
                     verbose = TRUE, pause = 1) {
+
+  accepted_rtypes <- c("N", "S", "F")
+  if (!(rtype %in% accepted_rtypes)) {
+    stop("Error: `rtype` needs to be one of N, S or F.")
+  }
 
   login_status_check(verbose = verbose)
 
@@ -142,30 +151,45 @@ records <- function(r, s = NULL, date_lookup = NULL, date_format = "%d/%m/%Y",
   if (verbose == TRUE) print("Done setting search filters...")
   if (verbose == TRUE) print("Setting species/date filters...")
 
-  if (!is.null(s)) {
-    sp_search <- remDr$findElement(using = "css selector",
-                                   value = "#s2id_autogen18")
-    sp_search$sendKeysToElement(list(s, key = "enter"))
+  # Set record type if requested
+  if (!is.null(rtype)) {
+    input_fields <- remDr$findElements("xpath", "//input")
+    input_fields[[4]]$sendKeysToElement(list(rtype, key = "enter"))
   }
 
+  # Set species if requested
+  if (!is.null(species)) {
+    sp_search <- remDr$findElement(using = "css selector",
+                                   value = "#s2id_autogen20")
+    sp_search$sendKeysToElement(list(species, key = "enter"))
+  }
+
+  # Set date to search for:
   if (!is.null(date_lookup)) {
-    # Make sure date is formatted correctly:
-    date_lookup <- as.vector(format(as.Date(date_lookup,
-                                            date_format),
-                                            "%d/%m/%Y")
-                            )
+    if (class(date_lookup) == "character") {
+      date_lookup <- list(date_lookup, date_lookup)
+    }
+    if (length(date_lookup) > 2) stop("More than two lookup dates supplied!")
+    
+    # Ensure date formatting is correct:
+    date_lookup <- lapply(date_lookup, date_reformatter, informat = date_format)
 
     dateSelectors <- remDr$findElements("css selector",
                                         "#dateFilters > div > div > input")
-    # Start date
-    dateSelectors[[1]]$sendKeysToElement(list(date_lookup, key = "enter"))
-    dateSelectors[[2]]$sendKeysToElement(list(date_lookup, key = "enter"))
+    # Set start and end dates:
+    dateSelectors[[1]]$sendKeysToElement(list(date_lookup[[1]], key = "enter"))
+    dateSelectors[[2]]$sendKeysToElement(list(date_lookup[[2]], key = "enter"))
   }
 
-  ring_search <- remDr$findElement(using = "css selector",
+  # Set ring to search for:
+  if (!is.null(ring)) {
+    ring_search <- remDr$findElement(using = "css selector",
                                    value = "#s2id_autogen2")
-  ring_search$sendKeysToElement(list(r, key = "enter"))
+    ring_search$sendKeysToElement(list(ring, key = "enter"))
+  }
+  
 
+  # Click search button
   search_button <- remDr$findElement(using = "css selector",
                                     value = ".searchBtn")
   search_button$clickElement()
@@ -380,9 +404,15 @@ extract_entry_counts <- function(s) {
   return(out)
 }
 
-recoveries <- function(ring, verbose = FALSE) {
+recoveries <- function(ring, op_group = NULL, verbose = FALSE) {
 
   login_status_check(verbose = verbose)
+
+  # Set desired operating group:
+  if (!is.null(op_group)) {
+    switch_op_group(op_group)
+    Sys.sleep(0.5)
+  }
 
   remDr$navigate(
   "https://app.bto.org/demography/bto/main/ringing-reports/recoveryReports.jsp")
