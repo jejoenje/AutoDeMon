@@ -32,9 +32,12 @@ r <- "GR88061"
 r2 <- "GR57316"
 
 z <- records(r, verbose = FALSE, date_lookup = "12/08/2015", op_group = "Tay Ringing Group")
-y <- records(r2, verbose = FALSE, op_group = "Grampian RG", date_lookup = "05/06/2013")
+#y <- records(r2, verbose = FALSE, op_group = "Grampian RG", date_lookup = "05/06/2013")
 
 A <- records(species = "HG", rtype = "N", date_lookup = list("01/01/2021","31/12/2021"), verbose = TRUE)
+B <- records(species = "HG", rtype = "S", date_lookup = list("01/01/2021","31/12/2021"), verbose = TRUE)
+C <- records(species = "HG", rtype = "F", date_lookup = list("01/01/2021","31/12/2021"), verbose = TRUE)
+
 
 switch_op_group("Tay Ringing Group")
 switch_op_group("Grampian RG")

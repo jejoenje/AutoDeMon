@@ -1,24 +1,28 @@
-### Data entry tests
 library(RSelenium)
 library(XML)
 library(rvest)
 
-source("AutoDemOn_functions.R")
-rD <- rsDriver(
-  port = 4486L,
-  browser = c("firefox"),
-  version = "latest",
-)
-remDr <- rD$client
+source("src/utils.R")
 
-demonLogin(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
+### Docker running
+remDr <- remoteDriver(port = 4445L)
+remDr$open(silent = TRUE)
 
-loginStatusCheck()
+### Standalone running (no Docker)
+# rD <- rsDriver(browser ="firefox",
+#                port = 4556L,
+#                verbose = FALSE,
+#                chromever = NULL)
+# remDr <- rD$client
 
-switchOperatingGroup("Mr J Minderman")
+demon_login(u = Sys.getenv("autod_u"), p = Sys.getenv("autod_p"))
+
+login_status_check()
+
+switch_op_group("Mr J Minderman")
 
 ### Raw data locations 
-dat_file_folder <- "../NESgulls/data/base/"
+dat_file_folder <- "~/OneDrive/NESgulls/"
 dat_file_name <- "NESgulls.xlsx"
 dat_file <- paste0(dat_file_folder, dat_file_name)
 ### BACKUP DATA FILE
@@ -46,13 +50,13 @@ for(i in 1:sheet_no) {
 }
 
 ### Select section of data - e.g. HERRING GULLS
-sel_sheet <- "HERRING GULLS"
+sel_sheet <- "GULLS"
 d <- DAT[[sel_sheet]]
 
 ### Process input data
-d$Type <- factor(d$Type)
+d$type <- factor(d$type)
 ### Sightings or Recoveries only:
-dd <- d[d$Type == "Sighting",]
+dd <- d[d$type == "Sighting",]
 ### Select unsubmitted data
 dd <- dd[is.na(dd$SUBM),]
 ### drop levels
